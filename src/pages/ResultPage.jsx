@@ -25,6 +25,16 @@ const GRADE_CLASS = {
   F: 'text-[#f75555]',
 };
 
+const GRADE_COLOR = {
+  A: '#049c6b',
+  'B+': '#ff981f',
+  B: '#ff981f',
+  C: '#ff981f',
+  'C+': '#ff981f',
+  D: '#f75555',
+  F: '#f75555',
+};
+
 const SEVERITY_CLASS = {
   High: 'text-[#f75555]',
   Medium: 'text-[#ff981f]',
@@ -35,7 +45,7 @@ export default function ResultPage() {
   const { t } = useOutletContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const result = useMemo(() => buildResultMock(location.state?.analysis), [location.state]);
+  const result = useMemo(() => location.state?.result ?? buildResultMock(location.state?.analysis), [location.state]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedTitle, setSelectedTitle] = useState('');
   const [selectedType, setSelectedType] = useState('');
@@ -125,6 +135,7 @@ function RepositoryHeader({ result }) {
 
 function ScoreBlock({ result }) {
   const gradeClass = GRADE_CLASS[result.grade] || 'text-[#049c6b]';
+  const gradeColor = GRADE_COLOR[result.grade] || '#049c6b';
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
   const progress = Math.max(0, Math.min(100, result.score));
@@ -140,7 +151,7 @@ function ScoreBlock({ result }) {
             cy="60"
             r={radius}
             fill="none"
-            stroke="#049c6b"
+            stroke={gradeColor}
             strokeWidth="20"
             strokeLinecap="round"
             strokeDasharray={circumference}

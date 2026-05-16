@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import settingsIcon from '@/assets/icons/Settings.svg';
 import chatIcon from '@/assets/icons/Chat Round.svg';
@@ -25,7 +25,9 @@ function MaskedIcon({ src, className }) {
 }
 
 export default function Sidebar({ t }) {
-  const [activeItem, setActiveItem] = useState(SIDEBAR_ITEMS.chat);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activeItem = location.pathname.startsWith('/history') || location.state?.fromHistory ? SIDEBAR_ITEMS.history : SIDEBAR_ITEMS.chat;
   const isActive = (item) => activeItem === item;
   const iconColor = (item) => (isActive(item) ? 'bg-[#4d5dfa]' : 'bg-[#212121] transition duration-150 group-hover:bg-[#4d5dfa]');
 
@@ -39,7 +41,7 @@ export default function Sidebar({ t }) {
         className="group absolute left-0 top-[13px] h-[50px] w-[89px] bg-transparent"
         type="button"
         aria-label={t.sidebar.settings}
-        onClick={() => setActiveItem(SIDEBAR_ITEMS.settings)}
+        onClick={() => navigate('/')}
         aria-pressed={isActive(SIDEBAR_ITEMS.settings)}
       >
         {isActive(SIDEBAR_ITEMS.settings) && (
@@ -61,7 +63,7 @@ export default function Sidebar({ t }) {
           className="group relative h-10 w-[89px] bg-transparent"
           type="button"
           aria-label={t.sidebar.chat}
-          onClick={() => setActiveItem(SIDEBAR_ITEMS.chat)}
+          onClick={() => navigate('/')}
           aria-pressed={isActive(SIDEBAR_ITEMS.chat)}
         >
           {isActive(SIDEBAR_ITEMS.chat) && (
@@ -79,7 +81,7 @@ export default function Sidebar({ t }) {
           className="group relative inline-flex h-10 w-[89px] items-center justify-center bg-transparent"
           type="button"
           aria-label={t.sidebar.history}
-          onClick={() => setActiveItem(SIDEBAR_ITEMS.history)}
+          onClick={() => navigate('/history')}
           aria-pressed={isActive(SIDEBAR_ITEMS.history)}
         >
           {isActive(SIDEBAR_ITEMS.history) && (

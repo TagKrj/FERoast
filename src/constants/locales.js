@@ -70,6 +70,14 @@ export const TEXTS = {
         close: 'Close',
       },
     },
+    history: {
+      show: 'Show',
+      showing: 'Showing',
+      to: 'to',
+      of: 'of',
+      previousPage: 'Previous page',
+      nextPage: 'Next page',
+    },
     footer: {
       copyright: '2026 VibeCheck.ai',
       privacyPolicy: 'Privacy Policy',
@@ -129,6 +137,14 @@ export const TEXTS = {
         close: 'Đóng',
       },
     },
+    history: {
+      show: 'Hiển thị',
+      showing: 'Đang hiển thị',
+      to: 'đến',
+      of: 'trên',
+      previousPage: 'Trang trước',
+      nextPage: 'Trang sau',
+    },
     footer: {
       copyright: '2026 VibeCheck.ai',
       privacyPolicy: 'Chính sách bảo mật',
@@ -187,6 +203,14 @@ export const TEXTS = {
         severity: 'Alvorlighet',
         close: 'Lukk',
       },
+    },
+    history: {
+      show: 'Vis',
+      showing: 'Viser',
+      to: 'til',
+      of: 'av',
+      previousPage: 'Forrige side',
+      nextPage: 'Neste side',
     },
     footer: {
       copyright: '2026 VibeCheck.ai',
