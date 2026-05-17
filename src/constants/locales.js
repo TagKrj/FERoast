@@ -49,6 +49,10 @@ export const TEXTS = {
       submitRepo: 'Submit repository link',
       analyze: 'Analyze source code',
       apiKeyRequired: 'A personal Gpt API key is required for large repositories',
+      checkingRepo: 'Checking repository',
+      checkingRepoWait: 'The repository check is still running. Please wait a moment.',
+      checkingRepoSeconds: 'seconds',
+      checkRepoFailed: 'Unable to check this repository. Please try again.',
       analysisLabels: {
         branch: 'Branch',
         fileCount: 'FileCount',
@@ -127,6 +131,10 @@ export const TEXTS = {
       submitRepo: 'Gửi liên kết kho mã',
       analyze: 'Phân tích mã nguồn',
       apiKeyRequired: 'Kho mã lớn bắt buộc phải có khóa Gpt API cá nhân',
+      checkingRepo: 'Đang kiểm tra kho mã',
+      checkingRepoWait: 'Quá trình kiểm tra vẫn đang chạy. Vui lòng đợi một chút.',
+      checkingRepoSeconds: 'giây',
+      checkRepoFailed: 'Không thể kiểm tra kho mã này. Vui lòng thử lại.',
       analysisLabels: {
         branch: 'Nhánh',
         fileCount: 'Số file',
@@ -205,6 +213,10 @@ export const TEXTS = {
       submitRepo: 'Send inn depotlenke',
       analyze: 'Analyser kildekode',
       apiKeyRequired: 'Et stort depot krever en personlig Gpt API-nøkkel',
+      checkingRepo: 'Sjekker depot',
+      checkingRepoWait: 'Depotsjekken kjører fortsatt. Vent litt.',
+      checkingRepoSeconds: 'sekunder',
+      checkRepoFailed: 'Kunne ikke sjekke dette depotet. Prøv igjen.',
       analysisLabels: {
         branch: 'Gren',
         fileCount: 'Filantall',

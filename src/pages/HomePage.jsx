@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import addCircleIcon from '@/assets/icons/Add Circle.svg';
@@ -6,8 +6,8 @@ import gptIcon from '@/assets/icons/GPT.svg';
 import playIcon from '@/assets/icons/Play.svg';
 import starsIcon from '@/assets/icons/Stars.svg';
 import sendArrowIcon from '@/assets/icons/Vector.svg';
-import { getMockAnalysisByRepo } from '@/constants/homeMockData';
 import { useAuth } from '@/hooks/useAuth';
+import { useRepoCheck } from '@/hooks/useRepoCheck';
 
 const SIZE_TONE_CLASS = {
   danger: 'text-[#f75555]',
@@ -18,11 +18,13 @@ const SIZE_TONE_CLASS = {
 export default function HomePage() {
   const { t } = useOutletContext();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { accessToken, isAuthenticated, user } = useAuth();
+  const { checkRepo, isChecking } = useRepoCheck();
   const [currentStep, setCurrentStep] = useState(1);
   const [repoUrl, setRepoUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [analysis, setAnalysis] = useState(null);
+  const [checkingSeconds, setCheckingSeconds] = useState(0);
   const labels = t.home.analysisLabels;
   const sizeToneClass = SIZE_TONE_CLASS[analysis?.sizeTone] || 'text-[#212121]';
   const isLargeRepository = analysis?.size === 'Large';
@@ -30,10 +32,26 @@ export default function HomePage() {
   const showApiKeyError = currentStep === 2 && isApiKeyMissing;
   const displayName = user?.github?.displayName || user?.name || user?.github?.username;
 
-  const handleRepoSubmit = (event) => {
+  useEffect(() => {
+    if (!isChecking) {
+      setCheckingSeconds(0);
+      return undefined;
+    }
+
+    const startedAt = Date.now();
+    const intervalId = window.setInterval(() => {
+      setCheckingSeconds(Math.max(1, Math.floor((Date.now() - startedAt) / 1000)));
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isChecking]);
+
+  const handleRepoSubmit = async (event) => {
     event.preventDefault();
 
-    if (!repoUrl.trim()) {
+    const trimmedRepoUrl = repoUrl.trim();
+
+    if (!trimmedRepoUrl || isChecking) {
       return;
     }
 
@@ -47,12 +65,19 @@ export default function HomePage() {
       return;
     }
 
-    setAnalysis({
-      ...getMockAnalysisByRepo(repoUrl),
-      repoUrl: repoUrl.trim(),
-    });
-    setApiKey('');
-    setCurrentStep(2);
+    try {
+      const nextAnalysis = await checkRepo({
+        accessToken,
+        repoUrl: trimmedRepoUrl,
+      });
+
+      setAnalysis(nextAnalysis);
+      setRepoUrl(nextAnalysis.repoUrl || trimmedRepoUrl);
+      setApiKey('');
+      setCurrentStep(2);
+    } catch {
+      window.alert(t.home.checkRepoFailed);
+    }
   };
 
   const handleAnalyzeSubmit = (event) => {
@@ -65,7 +90,7 @@ export default function HomePage() {
     navigate('/result', {
       state: {
         analysis,
-        repoUrl,
+        repoUrl: analysis?.repoUrl || repoUrl,
         usedPersonalApiKey: Boolean(apiKey.trim()),
       },
     });
@@ -144,7 +169,7 @@ export default function HomePage() {
                 <button
                   className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(180deg,#4da1fa_0%,#4d74fa_32.21%,#4d5dfa_100%)] p-0 shadow-[0_0_2.6px_rgba(77,93,250,0.15)] transition duration-150 hover:brightness-90 active:brightness-85 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa]"
                   type="submit"
-                  disabled={currentStep === 2 && isApiKeyMissing}
+                  disabled={(currentStep === 2 && isApiKeyMissing) || isChecking}
                   aria-label={currentStep === 1 ? t.home.submitRepo : t.home.analyze}
                 >
                   <img
@@ -202,15 +227,32 @@ export default function HomePage() {
           )}
         </div>
       </div>
+      {isChecking && <RepoCheckingAlert seconds={checkingSeconds} t={t} />}
     </section>
   );
 }
 
 function InfoRow({ label, value, valueClassName = 'text-black', wide = false }) {
+  const tooltip = String(value ?? '');
+
   return (
-    <div className={`flex max-w-full items-center gap-2 whitespace-nowrap ${wide ? 'w-full' : ''}`}>
+    <div className={`flex max-w-full items-center gap-2 whitespace-nowrap ${wide ? 'w-full' : ''}`} title={tooltip}>
       <span className="shrink-0 font-normal text-black">{label}:</span>
       <span className={`min-w-0 overflow-hidden text-ellipsis font-light ${valueClassName}`}>{value}</span>
+    </div>
+  );
+}
+
+function RepoCheckingAlert({ seconds, t }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4" role="alert" aria-live="polite">
+      <div className="w-full max-w-[420px] rounded-[15px] bg-white px-6 py-5 text-center shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
+        <p className="m-0 text-[18px] font-medium leading-6 text-[#212121]">{t.home.checkingRepo}</p>
+        <p className="m-0 mt-3 text-[14px] font-light leading-[22px] text-[#8f8f8f]">{t.home.checkingRepoWait}</p>
+        <p className="m-0 mt-4 text-[16px] font-medium leading-6 text-[#4d5dfa]">
+          {seconds} {t.home.checkingRepoSeconds}
+        </p>
+      </div>
     </div>
   );
 }

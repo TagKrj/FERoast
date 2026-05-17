@@ -13,4 +13,7 @@ export const API_ENDPOINTS = {
     github: '/api/auth/github',
     githubCallback: '/api/auth/github/callback',
   },
+  repos: {
+    check: '/api/repos/check',
+  },
 };
