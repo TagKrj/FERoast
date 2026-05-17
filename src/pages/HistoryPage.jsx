@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 
 import addCircleIcon from '@/assets/icons/Add Circle.svg';
 import Pagination from '@/components/Pagination';
-import { HISTORY_ITEMS, HISTORY_PAGE_SIZE, HISTORY_TOTAL_COUNT } from '@/constants/historyMockData';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoastHistory } from '@/hooks/useRoastHistory';
+
+const HISTORY_PAGE_SIZE = 10;
 
 const GRADE_CLASS = {
   A: 'text-[#049c6b]',
   'B+': 'text-[#ff981f]',
   B: 'text-[#ff981f]',
   C: 'text-[#ff981f]',
+  'C+': 'text-[#ff981f]',
   D: 'text-[#f75555]',
   F: 'text-[#f75555]',
 };
@@ -18,23 +21,57 @@ const GRADE_CLASS = {
 export default function HistoryPage() {
   const { t } = useOutletContext();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { accessToken, isAuthenticated, user } = useAuth();
+  const { isLoadingDetail, isLoadingHistory, loadHistory, loadRoastDetail } = useRoastHistory();
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(HISTORY_TOTAL_COUNT / HISTORY_PAGE_SIZE);
+  const [historyItems, setHistoryItems] = useState([]);
+  const [pagination, setPagination] = useState({
+    limit: HISTORY_PAGE_SIZE,
+    page: 1,
+    total: 0,
+    totalPages: 1,
+  });
   const displayName = user?.github?.displayName || user?.name || user?.github?.username;
+
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) {
+      return;
+    }
+
+    loadHistory({
+      accessToken,
+      limit: HISTORY_PAGE_SIZE,
+      page: currentPage,
+    })
+      .then((data) => {
+        setHistoryItems(data.items);
+        setPagination(data.pagination);
+      })
+      .catch(() => {
+        window.alert(t.history.loadFailed);
+      });
+  }, [accessToken, currentPage, isAuthenticated, loadHistory, t.history.loadFailed]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ returnTo: '/history' }} />;
   }
 
-  const openHistoryItem = (item) => {
-    navigate('/result', {
-      state: {
-        analysis: item.analysis,
-        fromHistory: true,
-        result: item.result,
-      },
-    });
+  const openHistoryItem = async (item) => {
+    try {
+      const result = await loadRoastDetail({
+        accessToken,
+        roastId: item.id,
+      });
+
+      navigate('/result', {
+        state: {
+          fromHistory: true,
+          result,
+        },
+      });
+    } catch {
+      window.alert(t.history.detailFailed);
+    }
   };
 
   return (
@@ -57,16 +94,22 @@ export default function HistoryPage() {
           <h1 className="m-0 text-[16px] font-medium leading-6 text-[#212121]">{t.sidebar.history}</h1>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-between">
-          <div className="flex w-full max-w-[719px] flex-col gap-[5px]">
-            {HISTORY_ITEMS.map((item) => (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-between gap-4">
+          <div className="min-h-0 w-full max-w-[759px] overflow-y-auto px-5 py-1 [scrollbar-color:#d8d8d8_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#d8d8d8] [&::-webkit-scrollbar-track]:bg-transparent">
+            <div className="mx-auto flex max-w-[719px] flex-col gap-[5px]">
+            {isLoadingHistory && <p className="m-0 py-6 text-center text-[14px] font-light text-[#8f8f8f]">{t.history.loading}</p>}
+            {!isLoadingHistory && historyItems.length === 0 && (
+              <p className="m-0 py-6 text-center text-[14px] font-light text-[#8f8f8f]">{t.history.empty}</p>
+            )}
+            {!isLoadingHistory && historyItems.map((item) => (
               <button
-                className="flex h-[76px] w-full items-center overflow-hidden rounded-[15px] bg-white px-[25px] py-[17px] text-left shadow-[0_0_4px_1px_rgba(0,0,0,0.1)] transition hover:bg-[#f4f4f4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa]"
+                className="flex h-[76px] w-full items-center overflow-hidden rounded-[15px] bg-white px-[25px] py-[17px] text-left shadow-[0_0_4px_1px_rgba(0,0,0,0.1)] transition hover:bg-[#f4f4f4] disabled:cursor-wait disabled:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa]"
                 type="button"
                 key={item.id}
+                disabled={isLoadingDetail}
                 onClick={() => openHistoryItem(item)}
               >
-                <div className="flex w-[180px] items-center justify-between leading-6">
+                <div className="grid w-full grid-cols-[42px_minmax(0,1fr)] items-center gap-5 leading-6">
                   <span className={`text-[24px] font-medium ${GRADE_CLASS[item.grade] || 'text-[#212121]'}`}>{item.grade}</span>
                   <span className="flex h-[52px] flex-col items-start justify-between text-[16px]">
                     <span className="font-normal text-[#212121]">{item.repository}</span>
@@ -75,18 +118,26 @@ export default function HistoryPage() {
                 </div>
               </button>
             ))}
+            </div>
           </div>
 
           <Pagination
             currentPage={currentPage}
             labels={t.history}
-            pageSize={HISTORY_PAGE_SIZE}
-            total={HISTORY_TOTAL_COUNT}
-            totalPages={totalPages}
+            pageSize={pagination.limit}
+            total={pagination.total}
+            totalPages={pagination.totalPages}
             onPageChange={setCurrentPage}
           />
         </div>
       </div>
+      {isLoadingDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4" role="alert" aria-live="polite">
+          <div className="w-full max-w-[420px] rounded-[15px] bg-white px-6 py-5 text-center shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
+            <p className="m-0 text-[18px] font-medium leading-6 text-[#212121]">{t.history.loadingDetail}</p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

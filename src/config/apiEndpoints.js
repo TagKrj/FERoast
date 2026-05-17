@@ -16,4 +16,9 @@ export const API_ENDPOINTS = {
   repos: {
     check: '/api/repos/check',
   },
+  roasts: {
+    analyze: (roastId) => `/api/roasts/${roastId}/analyze`,
+    detail: (roastId) => `/api/roasts/${roastId}`,
+    history: '/api/roasts/history',
+  },
 };

@@ -8,6 +8,7 @@ import starsIcon from '@/assets/icons/Stars.svg';
 import sendArrowIcon from '@/assets/icons/Vector.svg';
 import { useAuth } from '@/hooks/useAuth';
 import { useRepoCheck } from '@/hooks/useRepoCheck';
+import { useRoastAnalyze } from '@/hooks/useRoastAnalyze';
 
 const SIZE_TONE_CLASS = {
   danger: 'text-[#f75555]',
@@ -20,6 +21,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { accessToken, isAuthenticated, user } = useAuth();
   const { checkRepo, isChecking } = useRepoCheck();
+  const { analyze, isAnalyzing } = useRoastAnalyze();
   const [currentStep, setCurrentStep] = useState(1);
   const [repoUrl, setRepoUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -27,13 +29,14 @@ export default function HomePage() {
   const [checkingSeconds, setCheckingSeconds] = useState(0);
   const labels = t.home.analysisLabels;
   const sizeToneClass = SIZE_TONE_CLASS[analysis?.sizeTone] || 'text-[#212121]';
-  const isLargeRepository = analysis?.size === 'Large';
+  const isProcessing = isChecking || isAnalyzing;
+  const isLargeRepository = analysis?.gptKeyRequired || analysis?.size === 'Large';
   const isApiKeyMissing = isLargeRepository && !apiKey.trim();
   const showApiKeyError = currentStep === 2 && isApiKeyMissing;
   const displayName = user?.github?.displayName || user?.name || user?.github?.username;
 
   useEffect(() => {
-    if (!isChecking) {
+    if (!isProcessing) {
       setCheckingSeconds(0);
       return undefined;
     }
@@ -44,14 +47,14 @@ export default function HomePage() {
     }, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [isChecking]);
+  }, [isProcessing]);
 
   const handleRepoSubmit = async (event) => {
     event.preventDefault();
 
     const trimmedRepoUrl = repoUrl.trim();
 
-    if (!trimmedRepoUrl || isChecking) {
+    if (!trimmedRepoUrl || isProcessing) {
       return;
     }
 
@@ -80,20 +83,31 @@ export default function HomePage() {
     }
   };
 
-  const handleAnalyzeSubmit = (event) => {
+  const handleAnalyzeSubmit = async (event) => {
     event.preventDefault();
 
-    if (isApiKeyMissing) {
+    if (isApiKeyMissing || !analysis?.roastId || isProcessing) {
       return;
     }
 
-    navigate('/result', {
-      state: {
-        analysis,
-        repoUrl: analysis?.repoUrl || repoUrl,
-        usedPersonalApiKey: Boolean(apiKey.trim()),
-      },
-    });
+    try {
+      const result = await analyze({
+        accessToken,
+        openAiApiKey: apiKey.trim(),
+        roastId: analysis.roastId,
+      });
+
+      navigate('/result', {
+        state: {
+          analysis,
+          repoUrl: analysis?.repoUrl || repoUrl,
+          result,
+          usedPersonalApiKey: Boolean(apiKey.trim()),
+        },
+      });
+    } catch {
+      window.alert(t.home.analyzeFailed);
+    }
   };
 
   return (
@@ -169,7 +183,7 @@ export default function HomePage() {
                 <button
                   className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(180deg,#4da1fa_0%,#4d74fa_32.21%,#4d5dfa_100%)] p-0 shadow-[0_0_2.6px_rgba(77,93,250,0.15)] transition duration-150 hover:brightness-90 active:brightness-85 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa]"
                   type="submit"
-                  disabled={(currentStep === 2 && isApiKeyMissing) || isChecking}
+                  disabled={(currentStep === 2 && isApiKeyMissing) || isProcessing}
                   aria-label={currentStep === 1 ? t.home.submitRepo : t.home.analyze}
                 >
                   <img
@@ -227,7 +241,7 @@ export default function HomePage() {
           )}
         </div>
       </div>
-      {isChecking && <RepoCheckingAlert seconds={checkingSeconds} t={t} />}
+      {isProcessing && <RepoProcessingAlert isAnalyzing={isAnalyzing} seconds={checkingSeconds} t={t} />}
     </section>
   );
 }
@@ -243,12 +257,14 @@ function InfoRow({ label, value, valueClassName = 'text-black', wide = false }) 
   );
 }
 
-function RepoCheckingAlert({ seconds, t }) {
+function RepoProcessingAlert({ isAnalyzing, seconds, t }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4" role="alert" aria-live="polite">
       <div className="w-full max-w-[420px] rounded-[15px] bg-white px-6 py-5 text-center shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
-        <p className="m-0 text-[18px] font-medium leading-6 text-[#212121]">{t.home.checkingRepo}</p>
-        <p className="m-0 mt-3 text-[14px] font-light leading-[22px] text-[#8f8f8f]">{t.home.checkingRepoWait}</p>
+        <p className="m-0 text-[18px] font-medium leading-6 text-[#212121]">{isAnalyzing ? t.home.analyzingRepo : t.home.checkingRepo}</p>
+        <p className="m-0 mt-3 text-[14px] font-light leading-[22px] text-[#8f8f8f]">
+          {isAnalyzing ? t.home.analyzingRepoWait : t.home.checkingRepoWait}
+        </p>
         <p className="m-0 mt-4 text-[16px] font-medium leading-6 text-[#4d5dfa]">
           {seconds} {t.home.checkingRepoSeconds}
         </p>

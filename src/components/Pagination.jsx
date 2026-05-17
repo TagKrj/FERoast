@@ -45,7 +45,7 @@ export default function Pagination({ currentPage = 1, labels, pageSize = 10, tot
             return (
               <button
                 className={`inline-flex h-9 min-w-[35px] items-center justify-center rounded-[8px] px-3 text-[14px] leading-[22px] transition hover:bg-[#f4f4f4] ${
-                  isActive ? 'border border-[#212121] bg-white font-semibold text-[#212121]' : 'bg-white font-light text-[#16151c]'
+                  isActive ? 'border border-[#212121] bg-white font-semibold text-[#212121]' : 'border border-transparent bg-transparent font-light text-[#16151c]'
                 }`}
                 type="button"
                 key={page}
