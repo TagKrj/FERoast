@@ -127,7 +127,7 @@ function RepositoryHeader({ result }) {
           target="_blank"
           rel="noreferrer"
         >
-          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{result.repository}</span>
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-medium hover:underline">{result.repository}</span>
           <img className="size-[11px] shrink-0" src={linkIcon} alt="" aria-hidden="true" />
         </a>
         <span className="text-[#a2a1a8]">•</span>

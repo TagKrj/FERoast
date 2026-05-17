@@ -55,3 +55,15 @@ export async function getRoastDetail({ accessToken, roastId }) {
 
   return payload.data;
 }
+
+export async function deleteRoast({ accessToken, roastId }) {
+  const payload = await fetch(getApiUrl(API_ENDPOINTS.roasts.detail(roastId)), {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+  }).then(parseJsonResponse);
+
+  return payload.data;
+}

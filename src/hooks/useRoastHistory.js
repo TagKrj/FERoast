@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 
-import { getRoastDetail, getRoastHistory } from '@/services/roastService';
+import { deleteRoast, getRoastDetail, getRoastHistory } from '@/services/roastService';
 import { mapHistoryItem, mapRoastToResult } from '@/utils/roastMappers';
 
 export function useRoastHistory() {
   const [error, setError] = useState('');
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadHistory = useCallback(async ({ accessToken, limit, page, search }) => {
     setIsLoadingHistory(true);
@@ -41,8 +42,24 @@ export function useRoastHistory() {
     }
   }, []);
 
+  const deleteRoastReport = useCallback(async ({ accessToken, roastId }) => {
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      return await deleteRoast({ accessToken, roastId });
+    } catch (requestError) {
+      setError(requestError.message);
+      throw requestError;
+    } finally {
+      setIsDeleting(false);
+    }
+  }, []);
+
   return {
+    deleteRoastReport,
     error,
+    isDeleting,
     isLoadingDetail,
     isLoadingHistory,
     loadHistory,

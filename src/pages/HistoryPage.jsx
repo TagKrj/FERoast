@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 
 import addCircleIcon from '@/assets/icons/Add Circle.svg';
+import outIcon from '@/assets/icons/Out.svg';
 import Pagination from '@/components/Pagination';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoastHistory } from '@/hooks/useRoastHistory';
@@ -22,7 +23,7 @@ export default function HistoryPage() {
   const { t } = useOutletContext();
   const navigate = useNavigate();
   const { accessToken, isAuthenticated, user } = useAuth();
-  const { isLoadingDetail, isLoadingHistory, loadHistory, loadRoastDetail } = useRoastHistory();
+  const { deleteRoastReport, isDeleting, isLoadingDetail, isLoadingHistory, loadHistory, loadRoastDetail } = useRoastHistory();
   const [currentPage, setCurrentPage] = useState(1);
   const [historyItems, setHistoryItems] = useState([]);
   const [pagination, setPagination] = useState({
@@ -33,7 +34,7 @@ export default function HistoryPage() {
   });
   const displayName = user?.github?.displayName || user?.name || user?.github?.username;
 
-  useEffect(() => {
+  const refreshHistory = useCallback(() => {
     if (!isAuthenticated || !accessToken) {
       return;
     }
@@ -51,6 +52,10 @@ export default function HistoryPage() {
         window.alert(t.history.loadFailed);
       });
   }, [accessToken, currentPage, isAuthenticated, loadHistory, t.history.loadFailed]);
+
+  useEffect(() => {
+    refreshHistory();
+  }, [refreshHistory]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ returnTo: '/history' }} />;
@@ -71,6 +76,25 @@ export default function HistoryPage() {
       });
     } catch {
       window.alert(t.history.detailFailed);
+    }
+  };
+
+  const handleDeleteItem = async (event, item) => {
+    event.stopPropagation();
+
+    if (!window.confirm(t.history.deleteConfirm)) {
+      return;
+    }
+
+    try {
+      await deleteRoastReport({
+        accessToken,
+        roastId: item.id,
+      });
+      window.alert(t.history.deleteSuccess);
+      refreshHistory();
+    } catch {
+      window.alert(t.history.deleteFailed);
     }
   };
 
@@ -96,28 +120,46 @@ export default function HistoryPage() {
 
         <div className="flex min-h-0 flex-1 flex-col items-center justify-between gap-4">
           <div className="min-h-0 w-full max-w-[759px] overflow-y-auto px-5 py-1 [scrollbar-color:#d8d8d8_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#d8d8d8] [&::-webkit-scrollbar-track]:bg-transparent">
-            <div className="mx-auto flex max-w-[719px] flex-col gap-[5px]">
-            {isLoadingHistory && <p className="m-0 py-6 text-center text-[14px] font-light text-[#8f8f8f]">{t.history.loading}</p>}
-            {!isLoadingHistory && historyItems.length === 0 && (
-              <p className="m-0 py-6 text-center text-[14px] font-light text-[#8f8f8f]">{t.history.empty}</p>
-            )}
-            {!isLoadingHistory && historyItems.map((item) => (
-              <button
-                className="flex h-[76px] w-full items-center overflow-hidden rounded-[15px] bg-white px-[25px] py-[17px] text-left shadow-[0_0_4px_1px_rgba(0,0,0,0.1)] transition hover:bg-[#f4f4f4] disabled:cursor-wait disabled:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa]"
-                type="button"
-                key={item.id}
-                disabled={isLoadingDetail}
-                onClick={() => openHistoryItem(item)}
-              >
-                <div className="grid w-full grid-cols-[42px_minmax(0,1fr)] items-center gap-5 leading-6">
-                  <span className={`text-[24px] font-medium ${GRADE_CLASS[item.grade] || 'text-[#212121]'}`}>{item.grade}</span>
-                  <span className="flex h-[52px] flex-col items-start justify-between text-[16px]">
-                    <span className="font-normal text-[#212121]">{item.repository}</span>
-                    <span className="font-light text-[#a2a1a8]">{item.date}</span>
-                  </span>
+            <div className="mx-auto flex max-w-[719px] flex-col gap-2.5">
+              {isLoadingHistory && <p className="m-0 py-6 text-center text-[14px] font-light text-[#8f8f8f]">{t.history.loading}</p>}
+              {!isLoadingHistory && historyItems.length === 0 && (
+                <p className="m-0 py-6 text-center text-[14px] font-light text-[#8f8f8f]">{t.history.empty}</p>
+              )}
+              {!isLoadingHistory && historyItems.map((item) => (
+                <div
+                  className="flex h-[76px] w-full items-center overflow-hidden rounded-[15px] bg-white px-[25px] py-[17px] shadow-[0_0_4px_1px_rgba(0,0,0,0.1)] transition hover:bg-[#f7f7f7]"
+                  key={item.id}
+                >
+                  <button
+                    className="grid min-w-0 flex-1 grid-cols-[42px_minmax(0,1fr)] items-center gap-5 bg-transparent text-left leading-6 disabled:cursor-wait disabled:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa]"
+                    type="button"
+                    disabled={isLoadingDetail || isDeleting}
+                    onClick={() => openHistoryItem(item)}
+                  >
+                    <span className={`text-[24px] font-medium ${GRADE_CLASS[item.grade] || 'text-[#212121]'}`}>{item.grade}</span>
+                    <span className="flex h-[52px] flex-col items-start justify-between text-[16px]">
+                      <span className="font-normal text-[#212121]">{item.repository}</span>
+                      <span className="font-light text-[#a2a1a8]">{item.date}</span>
+                    </span>
+                  </button>
+                  <button
+                    className="group ml-4 inline-flex size-8 shrink-0 items-center justify-center bg-transparent disabled:cursor-wait disabled:opacity-60"
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={(event) => handleDeleteItem(event, item)}
+                    aria-label={t.history.deleteConfirm}
+                  >
+                    <span
+                      className="block size-[15px] bg-[#e1e1e1] transition group-hover:bg-[#f75555]"
+                      style={{
+                        mask: `url("${outIcon}") center / contain no-repeat`,
+                        WebkitMask: `url("${outIcon}") center / contain no-repeat`,
+                      }}
+                      aria-hidden="true"
+                    />
+                  </button>
                 </div>
-              </button>
-            ))}
+              ))}
             </div>
           </div>
 

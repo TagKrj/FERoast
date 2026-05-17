@@ -92,6 +92,9 @@ export const TEXTS = {
       empty: 'No completed roast history found.',
       loadFailed: 'Unable to load roast history.',
       detailFailed: 'Unable to load this roast report.',
+      deleteConfirm: 'Do you want to delete this roast report?',
+      deleteSuccess: 'Roast report deleted successfully.',
+      deleteFailed: 'Unable to delete this roast report.',
     },
     login: {
       title: 'Sign in to VibeCheck.ai',
@@ -182,6 +185,9 @@ export const TEXTS = {
       empty: 'Chưa có lịch sử phân tích hoàn tất.',
       loadFailed: 'Không thể tải lịch sử phân tích.',
       detailFailed: 'Không thể tải báo cáo phân tích này.',
+      deleteConfirm: 'Bạn có muốn xóa báo cáo phân tích này không?',
+      deleteSuccess: 'Xóa báo cáo phân tích thành công.',
+      deleteFailed: 'Không thể xóa báo cáo phân tích này.',
     },
     login: {
       title: 'Đăng nhập VibeCheck.ai',
@@ -272,6 +278,9 @@ export const TEXTS = {
       empty: 'Ingen fullført analysehistorikk funnet.',
       loadFailed: 'Kunne ikke laste analysehistorikk.',
       detailFailed: 'Kunne ikke laste denne analyserapporten.',
+      deleteConfirm: 'Vil du slette denne analyserapporten?',
+      deleteSuccess: 'Analyserapporten ble slettet.',
+      deleteFailed: 'Kunne ikke slette denne analyserapporten.',
     },
     login: {
       title: 'Logg inn på VibeCheck.ai',
