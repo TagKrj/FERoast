@@ -4,6 +4,7 @@ import settingsIcon from '@/assets/icons/Settings.svg';
 import chatIcon from '@/assets/icons/Chat Round.svg';
 import historyIcon from '@/assets/icons/History.svg';
 import logoutIcon from '@/assets/icons/Logout.svg';
+import { useAuth } from '@/hooks/useAuth';
 
 const SIDEBAR_ITEMS = {
   settings: 'settings',
@@ -27,9 +28,20 @@ function MaskedIcon({ src, className }) {
 export default function Sidebar({ t }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
   const activeItem = location.pathname.startsWith('/history') || location.state?.fromHistory ? SIDEBAR_ITEMS.history : SIDEBAR_ITEMS.chat;
   const isActive = (item) => activeItem === item;
   const iconColor = (item) => (isActive(item) ? 'bg-[#4d5dfa]' : 'bg-[#212121] transition duration-150 group-hover:bg-[#4d5dfa]');
+
+  const handleLogout = () => {
+    if (!window.confirm(t.sidebar.logoutConfirm)) {
+      return;
+    }
+
+    logout();
+    window.alert(t.sidebar.logoutSuccess);
+    navigate('/');
+  };
 
   return (
     <aside
@@ -81,7 +93,14 @@ export default function Sidebar({ t }) {
           className="group relative inline-flex h-10 w-[89px] items-center justify-center bg-transparent"
           type="button"
           aria-label={t.sidebar.history}
-          onClick={() => navigate('/history')}
+          onClick={() => {
+            if (isAuthenticated) {
+              navigate('/history');
+              return;
+            }
+
+            navigate('/login', { state: { returnTo: '/history' } });
+          }}
           aria-pressed={isActive(SIDEBAR_ITEMS.history)}
         >
           {isActive(SIDEBAR_ITEMS.history) && (
@@ -101,6 +120,7 @@ export default function Sidebar({ t }) {
         className="absolute bottom-3.5 right-[19px] inline-flex size-[50px] items-center justify-center rounded-full bg-white shadow-[0_0_6.4px_rgba(0,0,0,0.1)] hover:bg-[rgba(77,93,250,0.05)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa]"
         type="button"
         aria-label={t.sidebar.logout}
+        onClick={handleLogout}
       >
         <span className="inline-flex">
           <img className="size-6" src={logoutIcon} alt="" aria-hidden="true" />

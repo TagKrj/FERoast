@@ -8,6 +8,7 @@ import securityIcon from '@/assets/icons/Security.svg';
 import DetailCodeSmellPopup from '@/components/DetailCodeSmellPopup';
 import DetailSecurityPopup from '@/components/DetailSecurityPopup';
 import { buildResultMock } from '@/constants/resultMockData';
+import { useAuth } from '@/hooks/useAuth';
 
 const SIZE_TONE_CLASS = {
   danger: 'text-[#f75555]',
@@ -45,12 +46,14 @@ export default function ResultPage() {
   const { t } = useOutletContext();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const result = useMemo(() => location.state?.result ?? buildResultMock(location.state?.analysis), [location.state]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedTitle, setSelectedTitle] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const labels = t.result;
   const tableLabels = t.result.table;
+  const displayName = user?.github?.displayName || user?.name || user?.github?.username;
 
   const openRow = (title, row) => {
     setSelectedTitle(`Detail ${title}`);
@@ -66,7 +69,8 @@ export default function ResultPage() {
 
   return (
     <section className="flex min-h-0 flex-1 flex-col">
-      <div className="flex h-[76px] shrink-0 basis-[76px] items-center justify-end border-b border-[#dddddd] px-5 py-[18px]">
+      <div className="flex h-[76px] shrink-0 basis-[76px] items-center justify-between gap-4 border-b border-[#dddddd] px-5 py-[18px]">
+        <span className="min-w-0 truncate text-[16px] font-medium leading-6 text-[#212121]">{displayName || ''}</span>
         <button
           className="inline-flex h-10 w-fit min-w-[137px] shrink-0 items-center justify-center gap-2.5 whitespace-nowrap rounded-[100px] bg-[linear-gradient(180deg,#4d78fa_0%,#4d5dfa_100%)] px-4 text-[15px] font-light leading-[21px] tracking-[0] text-white shadow-[4px_8px_12px_rgba(77,93,250,0.25)] transition duration-150 hover:brightness-90 active:brightness-85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa] [text-shadow:4px_8px_24px_rgba(77,93,250,0.25)]"
           type="button"

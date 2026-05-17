@@ -27,6 +27,7 @@ export const TEXTS = {
     header: {
       notifications: 'Notifications',
       avatarAlt: 'User avatar',
+      login: 'Login',
     },
     sidebar: {
       settings: 'Settings',
@@ -34,6 +35,8 @@ export const TEXTS = {
       history: 'History',
       download: 'Download',
       logout: 'Logout',
+      logoutConfirm: 'Do you want to log out?',
+      logoutSuccess: 'Logged out successfully',
     },
     home: {
       newChat: 'New Chat',
@@ -78,6 +81,14 @@ export const TEXTS = {
       previousPage: 'Previous page',
       nextPage: 'Next page',
     },
+    login: {
+      title: 'Sign in to VibeCheck.ai',
+      subtitle: 'Use GitHub to access analysis history and submit repositories.',
+      githubButton: 'Continue with GitHub',
+      loading: 'Redirecting to GitHub...',
+      callbackLoading: 'Completing GitHub login...',
+      error: 'Unable to sign in. Please try again.',
+    },
     footer: {
       copyright: '2026 VibeCheck.ai',
       privacyPolicy: 'Privacy Policy',
@@ -94,6 +105,7 @@ export const TEXTS = {
     header: {
       notifications: 'Thông báo',
       avatarAlt: 'Ảnh đại diện người dùng',
+      login: 'Đăng nhập',
     },
     sidebar: {
       settings: 'Cài đặt',
@@ -101,6 +113,8 @@ export const TEXTS = {
       history: 'Lịch sử',
       download: 'Tải xuống',
       logout: 'Đăng xuất',
+      logoutConfirm: 'Bạn có đồng ý đăng xuất không?',
+      logoutSuccess: 'Đăng xuất thành công',
     },
     home: {
       newChat: 'Trò chuyện mới',
@@ -145,6 +159,14 @@ export const TEXTS = {
       previousPage: 'Trang trước',
       nextPage: 'Trang sau',
     },
+    login: {
+      title: 'Đăng nhập VibeCheck.ai',
+      subtitle: 'Dùng GitHub để xem lịch sử phân tích và gửi kho mã.',
+      githubButton: 'Tiếp tục với GitHub',
+      loading: 'Đang chuyển đến GitHub...',
+      callbackLoading: 'Đang hoàn tất đăng nhập GitHub...',
+      error: 'Không thể đăng nhập. Vui lòng thử lại.',
+    },
     footer: {
       copyright: '2026 VibeCheck.ai',
       privacyPolicy: 'Chính sách bảo mật',
@@ -161,6 +183,7 @@ export const TEXTS = {
     header: {
       notifications: 'Varsler',
       avatarAlt: 'Brukeravatar',
+      login: 'Logg inn',
     },
     sidebar: {
       settings: 'Innstillinger',
@@ -168,6 +191,8 @@ export const TEXTS = {
       history: 'Historikk',
       download: 'Last ned',
       logout: 'Logg ut',
+      logoutConfirm: 'Vil du logge ut?',
+      logoutSuccess: 'Du er logget ut',
     },
     home: {
       newChat: 'Ny chat',
@@ -211,6 +236,14 @@ export const TEXTS = {
       of: 'av',
       previousPage: 'Forrige side',
       nextPage: 'Neste side',
+    },
+    login: {
+      title: 'Logg inn på VibeCheck.ai',
+      subtitle: 'Bruk GitHub for å se analysehistorikk og sende inn depoter.',
+      githubButton: 'Fortsett med GitHub',
+      loading: 'Sender deg til GitHub...',
+      callbackLoading: 'Fullfører GitHub-innlogging...',
+      error: 'Kunne ikke logge inn. Prøv igjen.',
     },
     footer: {
       copyright: '2026 VibeCheck.ai',

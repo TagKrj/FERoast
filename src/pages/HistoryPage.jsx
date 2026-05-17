@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 
 import addCircleIcon from '@/assets/icons/Add Circle.svg';
 import Pagination from '@/components/Pagination';
 import { HISTORY_ITEMS, HISTORY_PAGE_SIZE, HISTORY_TOTAL_COUNT } from '@/constants/historyMockData';
+import { useAuth } from '@/hooks/useAuth';
 
 const GRADE_CLASS = {
   A: 'text-[#049c6b]',
@@ -17,8 +18,14 @@ const GRADE_CLASS = {
 export default function HistoryPage() {
   const { t } = useOutletContext();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(HISTORY_TOTAL_COUNT / HISTORY_PAGE_SIZE);
+  const displayName = user?.github?.displayName || user?.name || user?.github?.username;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ returnTo: '/history' }} />;
+  }
 
   const openHistoryItem = (item) => {
     navigate('/result', {
@@ -32,7 +39,8 @@ export default function HistoryPage() {
 
   return (
     <section className="flex min-h-0 flex-1 flex-col">
-      <div className="flex h-[76px] shrink-0 basis-[76px] items-center justify-end border-b border-[#dddddd] px-5 py-[18px]">
+      <div className="flex h-[76px] shrink-0 basis-[76px] items-center justify-between gap-4 border-b border-[#dddddd] px-5 py-[18px]">
+        <span className="min-w-0 truncate text-[16px] font-medium leading-6 text-[#212121]">{displayName || ''}</span>
         <button
           className="inline-flex h-10 w-fit min-w-[137px] shrink-0 items-center justify-center gap-2.5 whitespace-nowrap rounded-[100px] bg-[linear-gradient(180deg,#4d78fa_0%,#4d5dfa_100%)] px-4 text-[15px] font-light leading-[21px] tracking-[0] text-white shadow-[4px_8px_12px_rgba(77,93,250,0.25)] transition duration-150 hover:brightness-90 active:brightness-85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d5dfa] [text-shadow:4px_8px_24px_rgba(77,93,250,0.25)]"
           type="button"
