@@ -4,19 +4,73 @@ const SIZE_TONE_BY_LABEL = {
   small: 'success',
 };
 
-function mapIssue(issue) {
+export function mapIssue(issue) {
   const startLine = issue.startLine ?? '';
   const endLine = issue.endLine ?? '';
   const line = startLine && endLine && startLine !== endLine ? `${startLine}-${endLine}` : String(startLine || endLine || '');
+  const filePath = issue.filePath || issue.fileName || '';
+  const type = issue.title || issue.type || issue.issueType || '';
 
   return {
-    id: issue.index,
-    filePath: issue.filePath || issue.fileName,
-    type: issue.title,
-    description: issue.description,
+    id: issue.id || issue._id || issue.index || `${filePath}-${line}-${type}`,
+    index: issue.index,
+    filePath,
+    type,
+    description: issue.description || '',
+    fixPrompt: issue.fixPrompt,
+    fixPromptGeneratedAt: issue.fixPromptGeneratedAt,
+    fixPromptInstruction: issue.fixPromptInstruction,
+    fixPromptInstructionAnalysis: issue.fixPromptInstructionAnalysis,
+    fixPromptVersion: issue.fixPromptVersion,
     line,
     severity: issue.severityDisplay || issue.severity,
+    suggestion: issue.suggestion || '',
   };
+}
+
+function countBySeverity(items) {
+  return items.reduce(
+    (counts, item) => {
+      const severity = String(item.severityDisplay || item.severity || '').toLowerCase();
+
+      if (severity === 'high') {
+        counts.High += 1;
+      }
+
+      if (severity === 'medium') {
+        counts.Medium += 1;
+      }
+
+      if (severity === 'low') {
+        counts.Low += 1;
+      }
+
+      return counts;
+    },
+    { High: 0, Medium: 0, Low: 0 },
+  );
+}
+
+function mapSeverityCounts(source, fallbackItems = []) {
+  const fallbackCounts = countBySeverity(fallbackItems);
+
+  return {
+    High: source?.totalHigh ?? source?.high ?? fallbackCounts.High,
+    Medium: source?.totalMedium ?? source?.medium ?? fallbackCounts.Medium,
+    Low: source?.totalLow ?? source?.low ?? fallbackCounts.Low,
+  };
+}
+
+function getIssueItems(issueGroup) {
+  if (Array.isArray(issueGroup)) {
+    return issueGroup;
+  }
+
+  if (Array.isArray(issueGroup?.items)) {
+    return issueGroup.items;
+  }
+
+  return [];
 }
 
 function mapShortReview(shortReview) {
@@ -32,28 +86,40 @@ function mapShortReview(shortReview) {
 }
 
 export function mapRoastToResult(data) {
-  const roast = data.roast || data;
+  const roast = data.roast || data.report || data.roastReport || data.item || data;
   const sizeLabel = roast.repoInfo?.sizeLabel?.toLowerCase() || roast.sizeLabel?.toLowerCase();
-  const codeSmells = roast.issues?.codeSmells?.map(mapIssue) || roast.codeSmells?.map(mapIssue) || [];
-  const securityIssues = roast.issues?.security?.map(mapIssue) || roast.security?.map(mapIssue) || [];
+  const issues = roast.issues || {};
+  const codeSmellGroup = issues.codeSmells || issues.codeSmell || roast.codeSmells || roast.codeSmell;
+  const securityGroup = issues.security || issues.securityIssues || roast.security || roast.securityIssues;
+  const codeSmellRawItems = getIssueItems(codeSmellGroup);
+  const securityRawItems = getIssueItems(securityGroup);
+  const codeSmells = codeSmellRawItems.map(mapIssue);
+  const securityIssues = securityRawItems.map(mapIssue);
+  const codeSmellSeverityCounts = mapSeverityCounts(codeSmellGroup, codeSmellRawItems);
+  const securitySeverityCounts = mapSeverityCounts(securityGroup, securityRawItems);
+  const severityCounts = mapSeverityCounts(roast.repoInfo, [...codeSmellRawItems, ...securityRawItems]);
 
   return {
     analysisType: roast.repoInfo?.analysisTypeDisplay || roast.repoInfo?.analysisType || roast.analysisType,
-    analyzedAt: roast.roastDateDisplay,
-    codeSmellCount: roast.repoInfo?.totalCodeSmell ?? roast.totalCodeSmell ?? codeSmells.length,
+    analyzedAt: roast.roastDateDisplay || roast.date || '',
+    codeSmellCount: roast.repoInfo?.totalCodeSmell ?? roast.totalCodeSmell ?? codeSmellGroup?.all ?? codeSmells.length,
+    codeSmellSeverityCounts,
     codeSmells,
     fileCount: roast.repoInfo?.fileCount ?? roast.fileCount,
-    grade: roast.grade,
-    headline: roast.summaryTitle,
-    repository: roast.repository?.fullName || roast.repositoryFullName,
-    repositoryUrl: roast.repository?.htmlUrl || roast.repositoryUrl,
-    score: roast.score,
-    securityCount: roast.repoInfo?.totalSecurity ?? roast.totalSecurity ?? securityIssues.length,
+    grade: roast.grade || '',
+    headline: roast.summaryTitle || '',
+    repository: roast.repository?.fullName || roast.repositoryFullName || '',
+    repositoryUrl: roast.repository?.htmlUrl || roast.repositoryUrl || '#',
+    roastId: roast.id || roast.roastId || roast._id,
+    score: roast.score ?? 0,
+    securityCount: roast.repoInfo?.totalSecurity ?? roast.totalSecurity ?? securityGroup?.all ?? securityIssues.length,
+    securitySeverityCounts,
     securityIssues,
+    severityCounts,
     shortReview: mapShortReview(roast.shortReview),
-    size: roast.repoInfo?.sizeDisplay || roast.sizeDisplay,
+    size: roast.repoInfo?.sizeDisplay || roast.sizeDisplay || '',
     sizeTone: SIZE_TONE_BY_LABEL[sizeLabel] || 'warning',
-    summary: roast.summary,
+    summary: roast.summary || '',
   };
 }
 
@@ -62,7 +128,7 @@ export function mapHistoryItem(item) {
     analysisType: item.analysisType,
     date: item.roastDateDisplay,
     grade: item.grade,
-    id: item.roastId,
+    id: item.roastId || item.id || item._id,
     repository: item.repositoryFullName,
     repositoryUrl: item.repositoryUrl,
     roastDate: item.roastDate,

@@ -67,3 +67,19 @@ export async function deleteRoast({ accessToken, roastId }) {
 
   return payload.data;
 }
+
+export async function generateIssuePrompt({ accessToken, issueId, regenerateInstruction, roastId }) {
+  const body = regenerateInstruction?.trim() ? { regenerateInstruction: regenerateInstruction.trim() } : {};
+
+  const payload = await fetch(getApiUrl(API_ENDPOINTS.roasts.issuePrompt(roastId, issueId)), {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  }).then(parseJsonResponse);
+
+  return payload.data;
+}

@@ -20,5 +20,6 @@ export const API_ENDPOINTS = {
     analyze: (roastId) => `/api/roasts/${roastId}/analyze`,
     detail: (roastId) => `/api/roasts/${roastId}`,
     history: '/api/roasts/history',
+    issuePrompt: (roastId, issueId) => `/api/roasts/${roastId}/issues/${issueId}/prompt`,
   },
 };

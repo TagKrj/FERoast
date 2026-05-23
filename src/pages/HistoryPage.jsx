@@ -62,10 +62,17 @@ export default function HistoryPage() {
   }
 
   const openHistoryItem = async (item) => {
+    const roastId = item.id || item.roastId;
+
+    if (!roastId) {
+      window.alert(t.history.detailFailed);
+      return;
+    }
+
     try {
       const result = await loadRoastDetail({
         accessToken,
-        roastId: item.id,
+        roastId,
       });
 
       navigate('/result', {
