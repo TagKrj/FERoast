@@ -25,7 +25,7 @@ export default function PromptDetailModal({
       <div className="flex h-[min(720px,calc(100vh-48px))] w-full max-w-[1040px] flex-col overflow-hidden rounded-[15px] bg-white shadow-[0_16px_48px_rgba(0,0,0,0.2)]">
         <div className="flex h-[64px] shrink-0 items-center justify-between border-b border-[#e5e5e5] px-6">
           <div className="min-w-0">
-            <h2 className="m-0 text-[18px] font-medium leading-6 text-[#212121]">{labels.prompt.title}</h2>
+            <h2 className="m-0 text-[18px] font-medium leading-6 text-[#212121]">{labels.detailIssues}</h2>
             <p className="m-0 mt-1 truncate text-[12px] font-light leading-5 text-[#8f8f8f]">{row.filePath}</p>
           </div>
           <button
@@ -46,7 +46,7 @@ export default function PromptDetailModal({
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-[280px_minmax(0,1fr)] gap-5 bg-[rgba(77,93,250,0.02)] p-5">
-          <aside className="min-h-0 rounded-[12px] bg-white p-4 shadow-[0_0_4px_1px_rgba(0,0,0,0.08)]">
+          <aside className="min-h-0 overflow-auto rounded-[12px] bg-white p-4 shadow-[0_0_4px_1px_rgba(0,0,0,0.08)] [scrollbar-color:#eeeeee_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#eeeeee] [&::-webkit-scrollbar-track]:bg-transparent">
             <p className="m-0 text-[13px] font-medium leading-6 text-[#212121]">{labels.prompt.issueDetail}</p>
             <dl className="mt-3 grid gap-3 text-[12px] leading-5">
               <div>
@@ -64,6 +64,10 @@ export default function PromptDetailModal({
               <div>
                 <dt className="font-medium text-[#8f8f8f]">{labels.line}</dt>
                 <dd className="m-0 mt-1 font-light text-[#212121]">{row.line}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-[#8f8f8f]">{labels.suggestionsTitle}</dt>
+                <dd className="m-0 mt-1 font-light text-[#212121]">{row.suggestion || labels.noSuggestion}</dd>
               </div>
             </dl>
           </aside>
