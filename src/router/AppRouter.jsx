@@ -13,6 +13,7 @@ export default function AppRouter() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route index element={<HomePage />} />
+          <Route path="callback" element={<GithubCallbackPage />} />
           <Route path="auth/github/callback" element={<GithubCallbackPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="login" element={<LoginPage />} />
