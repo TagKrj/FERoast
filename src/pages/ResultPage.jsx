@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 
 import addCircleIcon from '@/assets/icons/Add Circle.svg';
@@ -12,9 +12,11 @@ import forbiddenIcon from '@/assets/icons/Forbidden Circle.svg';
 import infoIcon from '@/assets/icons/Info Circle.svg';
 import lightbulbIcon from '@/assets/icons/Lightbulb Minimalistic.svg';
 import linkIcon from '@/assets/icons/Link.svg';
+import maximizeIcon from '@/assets/icons/Maximize.svg';
 import securityIcon from '@/assets/icons/Shield Network.svg';
 import starsMinimalIcon from '@/assets/icons/Stars Minimalistic.svg';
 import starsIcon from '@/assets/icons/Stars.svg';
+import PromptDetailModal from '@/components/PromptDetailModal';
 import { buildResultMock } from '@/constants/resultMockData';
 import { useAuth } from '@/hooks/useAuth';
 import { useIssuePrompt } from '@/hooks/useIssuePrompt';
@@ -75,9 +77,11 @@ export default function ResultPage() {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [hasCopiedPrompt, setHasCopiedPrompt] = useState(false);
   const [showRefineInput, setShowRefineInput] = useState(false);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [refinement, setRefinement] = useState('');
   const [promptMode, setPromptMode] = useState('generate');
   const [promptSeconds, setPromptSeconds] = useState(0);
+  const refineInputRef = useRef(null);
 
   const labels = t.result;
   const codeSmellRows = result.codeSmells || EMPTY_ROWS;
@@ -127,6 +131,22 @@ export default function ResultPage() {
 
     return () => window.clearInterval(timerId);
   }, [isGeneratingPrompt]);
+
+  useEffect(() => {
+    if (!showRefineInput) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (refineInputRef.current && !refineInputRef.current.contains(event.target)) {
+        setShowRefineInput(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [showRefineInput]);
 
   const updateIssuePrompt = (updatedIssue) => {
     setResult((current) => {
@@ -234,6 +254,7 @@ export default function ResultPage() {
           </div>
           {showRefineInput ? (
             <form
+              ref={refineInputRef}
               className="absolute right-5 top-2.5 flex h-[34px] w-[400px] items-center overflow-hidden rounded-[8px] bg-white pl-2.5 shadow-[0_0_10px_1px_rgba(77,93,250,0.15)]"
               onSubmit={handleRegeneratePrompt}
             >
@@ -265,6 +286,21 @@ export default function ResultPage() {
               {isGeneratingPrompt ? labels.prompt.generatingButton : hasPrompt ? labels.prompt.regenerate : labels.prompt.generate}
             </button>
           )}
+          <button
+            className="group absolute right-5 top-[50px] inline-flex size-[30px] items-center justify-center rounded-[6px] bg-[#eef1ff]/80 transition hover:bg-[#e3e8ff]/100"
+            type="button"
+            onClick={() => setIsPromptModalOpen(true)}
+            aria-label={labels.prompt.openDetail}
+          >
+            <span
+              className="block size-4 bg-[#1c274c] transition group-hover:bg-[#4d5dfa]"
+              style={{
+                mask: `url("${maximizeIcon}") center / contain no-repeat`,
+                WebkitMask: `url("${maximizeIcon}") center / contain no-repeat`,
+              }}
+              aria-hidden="true"
+            />
+          </button>
           <div className="grid h-full min-h-0 grid-cols-[minmax(250px,0.85fr)_minmax(220px,0.7fr)_minmax(420px,1.7fr)]">
             <IssueDetail labels={labels} row={selectedRow} />
             <SuggestionPanel labels={labels} row={selectedRow} />
@@ -301,6 +337,22 @@ export default function ResultPage() {
           }
         />
       </div>
+
+      {isPromptModalOpen && (
+        <PromptDetailModal
+          hasCopiedPrompt={hasCopiedPrompt}
+          hasPrompt={hasPrompt}
+          isGenerating={isGeneratingPrompt}
+          labels={labels}
+          prompt={prompt}
+          refinement={refinement}
+          row={selectedRow}
+          onClose={() => setIsPromptModalOpen(false)}
+          onCopy={copyPrompt}
+          onRegenerate={handleRegeneratePrompt}
+          onRefinementChange={setRefinement}
+        />
+      )}
     </section>
   );
 }
@@ -458,7 +510,7 @@ function PromptPanel({ hasCopiedPrompt, hasGeneratedPrompt, labels, onCopy, prom
           {prompt}
         </pre>
         {hasCopiedPrompt && (
-          <span className="absolute right-11 top-3 rounded-[5px] bg-white/10 px-2 py-0.5 text-[11px] font-light leading-5 text-white">
+          <span className="absolute right-24 top-3 rounded-[5px] bg-white/10 px-2 py-0.5 text-[11px] font-light leading-5 text-white">
             {labels.prompt.copied}
           </span>
         )}
