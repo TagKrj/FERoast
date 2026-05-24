@@ -1,6 +1,6 @@
 import headerLogoImage from '@/assets/imgs/ChatGPT Image 13_41_51 15 thg 5, 2026 1.svg';
 import headerBellImage from '@/assets/icons/Bell.svg';
-import githubIcon from '@/assets/icons/gitHub.svg';
+import githubIcon from '@/assets/icons/github.svg';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Header({ onLoginClick, t }) {
@@ -39,7 +39,7 @@ export default function Header({ onLoginClick, t }) {
             type="button"
             onClick={onLoginClick}
           >
-            <img src={githubIcon} className='w-5 h-5' alt="GitHub" />
+            <img src={githubIcon} className="h-5 w-5" alt="GitHub" />
             {t.header.login}
           </button>
         )}
