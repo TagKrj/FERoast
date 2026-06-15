@@ -56,6 +56,7 @@ export const TEXTS = {
       analyzingRepo: 'Analyzing source code',
       analyzingRepoWait: 'The AI analysis is still running. Please wait a moment.',
       analyzeFailed: 'Unable to analyze this repository. Please try again.',
+      dailyAnalysisLimit: 'Daily analysis limit reached. Please try again in {time}.',
       analysisLabels: {
         branch: 'Branch',
         fileCount: 'FileCount',
@@ -198,6 +199,7 @@ export const TEXTS = {
       analyzingRepo: 'Đang phân tích mã nguồn',
       analyzingRepoWait: 'Quá trình phân tích AI vẫn đang chạy. Vui lòng đợi một chút.',
       analyzeFailed: 'Không thể phân tích kho mã này. Vui lòng thử lại.',
+      dailyAnalysisLimit: 'Bạn đã đạt giới hạn phân tích trong ngày. Vui lòng thử lại sau {time}.',
       analysisLabels: {
         branch: 'Nhánh',
         fileCount: 'Số file',
@@ -340,6 +342,7 @@ export const TEXTS = {
       analyzingRepo: 'Analyserer kildekode',
       analyzingRepoWait: 'AI-analysen kjører fortsatt. Vent litt.',
       analyzeFailed: 'Kunne ikke analysere dette depotet. Prøv igjen.',
+      dailyAnalysisLimit: 'Daglig analysegrense er nådd. Prøv igjen om {time}.',
       analysisLabels: {
         branch: 'Gren',
         fileCount: 'Filantall',

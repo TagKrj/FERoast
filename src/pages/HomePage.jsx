@@ -16,6 +16,8 @@ const SIZE_TONE_CLASS = {
   success: 'text-[#049c6b]',
 };
 
+const DAILY_ANALYSIS_LIMIT_CODE = 'DAILY_ANALYSIS_LIMIT_EXCEEDED';
+
 export default function HomePage() {
   const { t } = useOutletContext();
   const navigate = useNavigate();
@@ -105,7 +107,13 @@ export default function HomePage() {
           usedPersonalApiKey: Boolean(apiKey.trim()),
         },
       });
-    } catch {
+    } catch (requestError) {
+      if (requestError.code === DAILY_ANALYSIS_LIMIT_CODE) {
+        const retryAfterDisplay = requestError.details?.retryAfterDisplay;
+        window.alert(retryAfterDisplay ? t.home.dailyAnalysisLimit.replace('{time}', retryAfterDisplay) : requestError.message);
+        return;
+      }
+
       window.alert(t.home.analyzeFailed);
     }
   };

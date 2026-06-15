@@ -4,7 +4,11 @@ async function parseJsonResponse(response) {
   const payload = await response.json().catch(() => null);
 
   if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.message || 'Repository analysis failed');
+    const error = new Error(payload?.message || 'Repository analysis failed');
+    error.code = payload?.error?.code;
+    error.details = payload?.error?.details;
+    error.status = response.status;
+    throw error;
   }
 
   return payload;
