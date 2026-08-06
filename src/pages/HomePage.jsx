@@ -9,6 +9,7 @@ import sendArrowIcon from '@/assets/icons/Vector.svg';
 import { useAuth } from '@/hooks/useAuth';
 import { useRepoCheck } from '@/hooks/useRepoCheck';
 import { useRoastAnalyze } from '@/hooks/useRoastAnalyze';
+import { ANALYSIS_DOMAIN_KEYS } from '@/utils/roastMappers';
 
 const SIZE_TONE_CLASS = {
   danger: 'text-[#f75555]',
@@ -17,6 +18,14 @@ const SIZE_TONE_CLASS = {
 };
 
 const DAILY_ANALYSIS_LIMIT_CODE = 'DAILY_ANALYSIS_LIMIT_EXCEEDED';
+const INITIAL_DOMAIN_STATUSES = ANALYSIS_DOMAIN_KEYS.reduce((statuses, key) => {
+  statuses[key] = 'pending';
+  return statuses;
+}, {});
+
+const sleep = (duration) => new Promise((resolve) => {
+  window.setTimeout(resolve, duration);
+});
 
 export default function HomePage() {
   const { t } = useOutletContext();
@@ -29,9 +38,11 @@ export default function HomePage() {
   const [apiKey, setApiKey] = useState('');
   const [analysis, setAnalysis] = useState(null);
   const [checkingSeconds, setCheckingSeconds] = useState(0);
+  const [analysisDomainStatuses, setAnalysisDomainStatuses] = useState(INITIAL_DOMAIN_STATUSES);
+  const [showAnalyzeLoading, setShowAnalyzeLoading] = useState(false);
   const labels = t.home.analysisLabels;
   const sizeToneClass = SIZE_TONE_CLASS[analysis?.sizeTone] || 'text-[#212121]';
-  const isProcessing = isChecking || isAnalyzing;
+  const isProcessing = isChecking || isAnalyzing || showAnalyzeLoading;
   const isLargeRepository = analysis?.gptKeyRequired || analysis?.size === 'Large';
   const isApiKeyMissing = isLargeRepository && !apiKey.trim();
   const showApiKeyError = currentStep === 2 && isApiKeyMissing;
@@ -50,6 +61,42 @@ export default function HomePage() {
 
     return () => window.clearInterval(intervalId);
   }, [isProcessing]);
+
+  useEffect(() => {
+    if (!showAnalyzeLoading) {
+      setAnalysisDomainStatuses(INITIAL_DOMAIN_STATUSES);
+      return undefined;
+    }
+
+    setAnalysisDomainStatuses({
+      ...INITIAL_DOMAIN_STATUSES,
+      [ANALYSIS_DOMAIN_KEYS[0]]: 'running',
+    });
+
+    const intervalId = window.setInterval(() => {
+      setAnalysisDomainStatuses((current) => {
+        const runningIndex = ANALYSIS_DOMAIN_KEYS.findIndex((key) => current[key] === 'running');
+
+        if (runningIndex === -1) {
+          return current;
+        }
+
+        const nextStatuses = {
+          ...current,
+          [ANALYSIS_DOMAIN_KEYS[runningIndex]]: 'completed',
+        };
+        const nextKey = ANALYSIS_DOMAIN_KEYS[runningIndex + 1];
+
+        if (nextKey) {
+          nextStatuses[nextKey] = 'running';
+        }
+
+        return nextStatuses;
+      });
+    }, 1300);
+
+    return () => window.clearInterval(intervalId);
+  }, [showAnalyzeLoading]);
 
   const handleRepoSubmit = async (event) => {
     event.preventDefault();
@@ -93,11 +140,18 @@ export default function HomePage() {
     }
 
     try {
+      setShowAnalyzeLoading(true);
       const result = await analyze({
         accessToken,
         openAiApiKey: apiKey.trim(),
         roastId: analysis.roastId,
       });
+
+      setAnalysisDomainStatuses(ANALYSIS_DOMAIN_KEYS.reduce((statuses, key) => {
+        statuses[key] = 'completed';
+        return statuses;
+      }, {}));
+      await sleep(450);
 
       navigate('/result', {
         state: {
@@ -108,6 +162,7 @@ export default function HomePage() {
         },
       });
     } catch (requestError) {
+      setShowAnalyzeLoading(false);
       if (requestError.code === DAILY_ANALYSIS_LIMIT_CODE) {
         const retryAfterDisplay = requestError.details?.retryAfterDisplay;
         window.alert(retryAfterDisplay ? t.home.dailyAnalysisLimit.replace('{time}', retryAfterDisplay) : requestError.message);
@@ -249,7 +304,14 @@ export default function HomePage() {
           )}
         </div>
       </div>
-      {isProcessing && <RepoProcessingAlert isAnalyzing={isAnalyzing} seconds={checkingSeconds} t={t} />}
+      {(isChecking || showAnalyzeLoading) && (
+        <RepoProcessingAlert
+          domainStatuses={analysisDomainStatuses}
+          isAnalyzing={showAnalyzeLoading}
+          seconds={checkingSeconds}
+          t={t}
+        />
+      )}
     </section>
   );
 }
@@ -265,16 +327,50 @@ function InfoRow({ label, value, valueClassName = 'text-black', wide = false }) 
   );
 }
 
-function RepoProcessingAlert({ isAnalyzing, seconds, t }) {
+function RepoProcessingAlert({ domainStatuses, isAnalyzing, seconds, t }) {
+  const domainLabels = t.home.analysisDomains || {};
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4" role="alert" aria-live="polite">
-      <div className="w-full max-w-[420px] rounded-[15px] bg-white px-6 py-5 text-center shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
+      <div className={`w-full rounded-[15px] bg-white px-6 py-5 text-center shadow-[0_16px_40px_rgba(0,0,0,0.18)] ${isAnalyzing ? 'max-w-[760px]' : 'max-w-[420px]'}`}>
         <p className="m-0 text-[18px] font-medium leading-6 text-[#212121]">{isAnalyzing ? t.home.analyzingRepo : t.home.checkingRepo}</p>
         <p className="m-0 mt-3 text-[14px] font-light leading-[22px] text-[#8f8f8f]">
           {isAnalyzing ? t.home.analyzingRepoWait : t.home.checkingRepoWait}
         </p>
+        {isAnalyzing && (
+          <div className="mt-5 grid grid-cols-2 gap-3 text-left max-[640px]:grid-cols-1">
+            {ANALYSIS_DOMAIN_KEYS.map((key) => (
+              <AnalysisDomainLoadingCard
+                key={key}
+                label={domainLabels[key]?.label || key}
+                running={domainLabels[key]?.running || ''}
+                completed={domainLabels[key]?.completed || ''}
+                status={domainStatuses[key] || 'pending'}
+              />
+            ))}
+          </div>
+        )}
         <p className="m-0 mt-4 text-[16px] font-medium leading-6 text-[#4d5dfa]">
           {seconds} {t.home.checkingRepoSeconds}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AnalysisDomainLoadingCard({ completed, label, running, status }) {
+  const isCompleted = status === 'completed';
+  const isRunning = status === 'running';
+  const statusClass = isCompleted ? 'bg-[#049c6b]' : isRunning ? 'bg-[#4d5dfa]' : 'bg-[#dddddd]';
+  const cardClass = isRunning ? 'border-[#4d5dfa] bg-[#f7f8ff]' : isCompleted ? 'border-[#dff3ec] bg-[#fbfffd]' : 'border-[#eeeeee] bg-white';
+
+  return (
+    <div className={`flex min-h-[74px] items-start gap-3 rounded-[10px] border px-3 py-2.5 transition ${cardClass}`}>
+      <span className={`mt-1 size-2.5 shrink-0 rounded-full ${statusClass} ${isRunning ? 'animate-pulse' : ''}`} />
+      <div className="min-w-0">
+        <p className="m-0 text-[13px] font-medium leading-5 text-[#212121]">{label}</p>
+        <p className="m-0 mt-1 line-clamp-2 text-[12px] font-light leading-5 text-[#8f8f8f]">
+          {isCompleted ? completed : isRunning ? running : running}
         </p>
       </div>
     </div>

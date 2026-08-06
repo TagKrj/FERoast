@@ -50,8 +50,12 @@ export default function PromptDetailModal({
             <p className="m-0 text-[13px] font-medium leading-6 text-[#212121]">{labels.prompt.issueDetail}</p>
             <dl className="mt-3 grid gap-3 text-[12px] leading-5">
               <div>
-                <dt className="font-medium text-[#8f8f8f]">{labels.table.typeCodeSmell}</dt>
+                <dt className="font-medium text-[#8f8f8f]">{labels.table.typeIssue}</dt>
                 <dd className="m-0 mt-1 font-light text-[#212121]">{row.type}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-[#8f8f8f]">{labels.table.priority}</dt>
+                <dd className="m-0 mt-1 font-light text-[#212121]">{row.priorityDisplay || row.priority}</dd>
               </div>
               <div>
                 <dt className="font-medium text-[#8f8f8f]">{labels.table.description}</dt>
