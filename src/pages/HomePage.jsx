@@ -18,6 +18,7 @@ const SIZE_TONE_CLASS = {
 };
 
 const DAILY_ANALYSIS_LIMIT_CODE = 'DAILY_ANALYSIS_LIMIT_EXCEEDED';
+const ALLOW_SYSTEM_AI_FOR_LARGE = import.meta.env.VITE_ALLOW_SYSTEM_AI_FOR_LARGE === 'true';
 const INITIAL_DOMAIN_STATUSES = ANALYSIS_DOMAIN_KEYS.reduce((statuses, key) => {
   statuses[key] = 'pending';
   return statuses;
@@ -44,7 +45,7 @@ export default function HomePage() {
   const sizeToneClass = SIZE_TONE_CLASS[analysis?.sizeTone] || 'text-[#212121]';
   const isProcessing = isChecking || isAnalyzing || showAnalyzeLoading;
   const isLargeRepository = analysis?.gptKeyRequired || analysis?.size === 'Large';
-  const isApiKeyMissing = isLargeRepository && !apiKey.trim();
+  const isApiKeyMissing = isLargeRepository && !ALLOW_SYSTEM_AI_FOR_LARGE && !apiKey.trim();
   const showApiKeyError = currentStep === 2 && isApiKeyMissing;
   const displayName = user?.github?.displayName || user?.name || user?.github?.username;
 
@@ -169,7 +170,7 @@ export default function HomePage() {
         return;
       }
 
-      window.alert(t.home.analyzeFailed);
+      window.alert(requestError.message || t.home.analyzeFailed);
     }
   };
 
