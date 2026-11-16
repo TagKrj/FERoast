@@ -293,6 +293,7 @@ export default function ResultPage() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden bg-[rgba(77,93,250,0.02)] p-[15px]">
+        <DegradedNotice labels={labels} provenance={result.provenance} />
         <section className="grid h-[190px] shrink-0 grid-cols-[minmax(210px,1.15fr)_minmax(360px,2.3fr)_minmax(430px,3fr)] gap-2">
           <ScoreCard labels={labels} result={result} />
           <PrioritySummary counts={priorityCounts} labels={labels} />
@@ -423,7 +424,30 @@ function RepositoryHeader({ result }) {
       </a>
       <span className="text-[13px] text-[#a2a1a8]">•</span>
       <span className="whitespace-nowrap text-[13px] font-normal leading-6 text-[#a2a1a8]">{result.analyzedAt}</span>
+      {result.provenance?.model && (
+        <>
+          <span className="text-[13px] text-[#a2a1a8]">•</span>
+          <span className="whitespace-nowrap text-[13px] font-normal leading-6 text-[#a2a1a8]">{result.provenance.model}</span>
+        </>
+      )}
     </div>
+  );
+}
+
+function DegradedNotice({ labels, provenance }) {
+  if (provenance?.degraded !== true) {
+    return null;
+  }
+
+  const domains = ANALYSIS_DOMAIN_KEYS
+    .filter((key) => provenance.domains?.[key]?.degraded)
+    .map((key) => getDomainLabel(labels, key))
+    .join(', ');
+
+  return (
+    <p className="m-0 shrink-0 rounded-[10px] border border-[#ff981f] bg-[#fff8ec] px-4 py-2 text-[13px] font-normal leading-5 text-[#212121]" role="status">
+      {labels.degradedNotice.replace('{domains}', domains)}
+    </p>
   );
 }
 

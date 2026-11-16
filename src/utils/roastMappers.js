@@ -205,6 +205,7 @@ export function mapRoastToResult(data) {
     securitySeverityCounts: securityPriorityCounts,
     securityIssues,
     priorityCounts,
+    provenance: roast.provenance || null,
     severityCounts: priorityCounts,
     shortReview: mapShortReview(roast.shortReview),
     size: roast.repoInfo?.sizeDisplay || roast.sizeDisplay || '',
