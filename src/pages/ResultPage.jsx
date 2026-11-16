@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 
 import addCircleIcon from '@/assets/icons/Add Circle.svg';
 import boltIcon from '@/assets/icons/Bolt.svg';
@@ -18,10 +18,10 @@ import securityIcon from '@/assets/icons/Shield Network.svg';
 import starsMinimalIcon from '@/assets/icons/Stars Minimalistic.svg';
 import starsIcon from '@/assets/icons/Stars.svg';
 import PromptDetailModal from '@/components/PromptDetailModal';
-import { buildResultMock } from '@/constants/resultMockData';
 import { useAuth } from '@/hooks/useAuth';
 import { useIssuePrompt } from '@/hooks/useIssuePrompt';
-import { ANALYSIS_DOMAIN_KEYS } from '@/utils/roastMappers';
+import { getRoastDetail } from '@/services/roastService';
+import { ANALYSIS_DOMAIN_KEYS, mapRoastToResult } from '@/utils/roastMappers';
 
 const DEFAULT_DOMAIN = 'maintainability';
 
@@ -107,13 +107,64 @@ function buildFallbackIssueDomains(result) {
   }, {});
 }
 
+// Router state gives an instant render; ?id= lets a refresh or shared link load the real report.
 export default function ResultPage() {
   const { t } = useOutletContext();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { accessToken } = useAuth();
+  const roastId = searchParams.get('id');
+  const stateResult = location.state?.result;
+  const [loadedResult, setLoadedResult] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (stateResult || !roastId) {
+      return undefined;
+    }
+
+    let isCancelled = false;
+    getRoastDetail({ accessToken, roastId })
+      .then((data) => {
+        if (!isCancelled) {
+          setLoadedResult(mapRoastToResult(data));
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setLoadFailed(true);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [accessToken, roastId, stateResult]);
+
+  if (stateResult) {
+    return <ResultView initialResult={stateResult} />;
+  }
+
+  if (!roastId || loadFailed) {
+    return <Navigate to="/history" replace />;
+  }
+
+  if (!loadedResult) {
+    return (
+      <section className="flex min-h-0 flex-1 items-center justify-center">
+        <p className="m-0 text-[14px] font-light leading-[22px] text-[#8f8f8f]">{t.history.loadingDetail}</p>
+      </section>
+    );
+  }
+
+  return <ResultView initialResult={loadedResult} />;
+}
+
+function ResultView({ initialResult }) {
+  const { t } = useOutletContext();
   const navigate = useNavigate();
   const { accessToken } = useAuth();
   const { generatePrompt, isGeneratingPrompt } = useIssuePrompt();
-  const initialResult = useMemo(() => location.state?.result ?? buildResultMock(location.state?.analysis), [location.state]);
   const [result, setResult] = useState(initialResult);
   const [activeIssueType, setActiveIssueType] = useState(DEFAULT_DOMAIN);
   const [selectedRowId, setSelectedRowId] = useState(null);

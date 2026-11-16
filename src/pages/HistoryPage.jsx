@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import addCircleIcon from '@/assets/icons/Add Circle.svg';
 import outIcon from '@/assets/icons/Out.svg';
@@ -57,10 +57,6 @@ export default function HistoryPage() {
     refreshHistory();
   }, [refreshHistory]);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ returnTo: '/history' }} />;
-  }
-
   const openHistoryItem = async (item) => {
     const roastId = item.id || item.roastId;
 
@@ -75,7 +71,7 @@ export default function HistoryPage() {
         roastId,
       });
 
-      navigate('/result', {
+      navigate(`/result?id=${encodeURIComponent(roastId)}`, {
         state: {
           fromHistory: true,
           result,

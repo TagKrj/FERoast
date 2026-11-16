@@ -154,7 +154,7 @@ export default function HomePage() {
       }, {}));
       await sleep(450);
 
-      navigate('/result', {
+      navigate(`/result?id=${encodeURIComponent(result.roastId)}`, {
         state: {
           analysis,
           repoUrl: analysis?.repoUrl || repoUrl,
