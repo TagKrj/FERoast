@@ -28,8 +28,11 @@ export function AuthProvider({ children }) {
     setError('');
 
     try {
+      // One-time nonce; GithubCallbackPage rejects a callback that does not echo it.
+      const state = window.crypto.randomUUID();
+      window.sessionStorage.setItem('auth.state', state);
       window.sessionStorage.setItem('auth.returnTo', returnTo);
-      const authUrl = await getGithubAuthUrl(returnTo);
+      const authUrl = await getGithubAuthUrl(state);
       window.location.assign(authUrl);
     } catch (requestError) {
       setError(requestError.message);
