@@ -6,6 +6,7 @@ import HistoryPage from '@/pages/HistoryPage';
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import ResultPage from '@/pages/ResultPage';
+import RequireAuth from '@/router/RequireAuth';
 
 export default function AppRouter() {
   return (
@@ -15,9 +16,11 @@ export default function AppRouter() {
           <Route index element={<HomePage />} />
           <Route path="callback" element={<GithubCallbackPage />} />
           <Route path="auth/github/callback" element={<GithubCallbackPage />} />
-          <Route path="history" element={<HistoryPage />} />
           <Route path="login" element={<LoginPage />} />
-          <Route path="result" element={<ResultPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="history" element={<HistoryPage />} />
+            <Route path="result" element={<ResultPage />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
