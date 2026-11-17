@@ -21,6 +21,14 @@ function readRedirectedUser(searchParams) {
   }
 }
 
+function consumeReturnTo() {
+  const returnTo = window.sessionStorage.getItem('auth.returnTo');
+  window.sessionStorage.removeItem('auth.returnTo');
+
+  // Only same-app paths; browsers treat '//host' and '/\host' as protocol-relative.
+  return /^\/(?![/\\])/.test(returnTo || '') ? returnTo : '/';
+}
+
 export default function GithubCallbackPage() {
   const { t } = useOutletContext();
   const navigate = useNavigate();
@@ -35,6 +43,14 @@ export default function GithubCallbackPage() {
     }
 
     hasStarted.current = true;
+    const expectedState = window.sessionStorage.getItem('auth.state');
+    window.sessionStorage.removeItem('auth.state');
+
+    if (!expectedState || searchParams.get('state') !== expectedState) {
+      setError(t.login.error);
+      return;
+    }
+
     const accessToken = searchParams.get('accessToken') || searchParams.get('token');
     const redirectedUser = readRedirectedUser(searchParams);
 
@@ -43,9 +59,8 @@ export default function GithubCallbackPage() {
         accessToken,
         user: redirectedUser,
       });
-      window.sessionStorage.removeItem('auth.returnTo');
       window.alert('Đăng nhập thành công');
-      navigate('/', { replace: true });
+      navigate(consumeReturnTo(), { replace: true });
       return;
     }
 
@@ -58,9 +73,8 @@ export default function GithubCallbackPage() {
 
     completeGithubLogin(code)
       .then(() => {
-        window.sessionStorage.removeItem('auth.returnTo');
         window.alert('Đăng nhập thành công');
-        navigate('/', { replace: true });
+        navigate(consumeReturnTo(), { replace: true });
       })
       .catch(() => {
         setError(t.login.error);
