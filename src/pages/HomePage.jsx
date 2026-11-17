@@ -23,6 +23,10 @@ const INITIAL_DOMAIN_STATUSES = ANALYSIS_DOMAIN_KEYS.reduce((statuses, key) => {
   statuses[key] = 'pending';
   return statuses;
 }, {});
+const RUNNING_DOMAIN_STATUSES = ANALYSIS_DOMAIN_KEYS.reduce((statuses, key) => {
+  statuses[key] = 'running';
+  return statuses;
+}, {});
 
 const sleep = (duration) => new Promise((resolve) => {
   window.setTimeout(resolve, duration);
@@ -63,40 +67,10 @@ export default function HomePage() {
     return () => window.clearInterval(intervalId);
   }, [isProcessing]);
 
+  // The backend analyses all six domains concurrently and reports nothing until done,
+  // so every domain shows as running; the elapsed timer is the only real signal.
   useEffect(() => {
-    if (!showAnalyzeLoading) {
-      setAnalysisDomainStatuses(INITIAL_DOMAIN_STATUSES);
-      return undefined;
-    }
-
-    setAnalysisDomainStatuses({
-      ...INITIAL_DOMAIN_STATUSES,
-      [ANALYSIS_DOMAIN_KEYS[0]]: 'running',
-    });
-
-    const intervalId = window.setInterval(() => {
-      setAnalysisDomainStatuses((current) => {
-        const runningIndex = ANALYSIS_DOMAIN_KEYS.findIndex((key) => current[key] === 'running');
-
-        if (runningIndex === -1) {
-          return current;
-        }
-
-        const nextStatuses = {
-          ...current,
-          [ANALYSIS_DOMAIN_KEYS[runningIndex]]: 'completed',
-        };
-        const nextKey = ANALYSIS_DOMAIN_KEYS[runningIndex + 1];
-
-        if (nextKey) {
-          nextStatuses[nextKey] = 'running';
-        }
-
-        return nextStatuses;
-      });
-    }, 1300);
-
-    return () => window.clearInterval(intervalId);
+    setAnalysisDomainStatuses(showAnalyzeLoading ? RUNNING_DOMAIN_STATUSES : INITIAL_DOMAIN_STATUSES);
   }, [showAnalyzeLoading]);
 
   const handleRepoSubmit = async (event) => {
